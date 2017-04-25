@@ -34,7 +34,7 @@ import sys, socket
 from pprint import pprint
 
 try:
-    import dns.resolver, dns.zone
+    import dns.resolver, dns.zone, dns.query
     from dns.exception import DNSException
     from dns.rdataclass import *
     from dns.rdatatype import *
@@ -71,7 +71,13 @@ if __name__ == '__main__':
 
     z = dns.zone.from_file(opts.zonefile, origin=opts.zone, relativize=False)
 
-    r = dns.resolver.Resolver(configure=False)
+    # a cloudflare no le gusta y responde vacio cuando es un cname ya que no es un answer
+    # http://stackoverflow.com/questions/18898847/dnspython-raises-noanswer-in-spite-of-query-answer#20459494
+    # probamos con dns.query.udp como alternativa
+    #    r = dns.resolver.Resolver(configure=False)
+    #    r = dns.query.udp(name,rdataset.rdtype)
+    r = dns.message.make_query(opts.zone, dns.rdatatype.ANY)
+
     try:
         r.nameservers = socket.gethostbyname_ex(opts.nameserver)[2]
     except socket.error:
@@ -89,7 +95,10 @@ if __name__ == '__main__':
         match = False
         result = None
         try:
-            ans = r.query(name, rdataset.rdtype, rdataset.rdclass)
+        #            ans = r.query(name, rdataset.rdtype, rdataset.rdclass)
+        # cloudflare: modificamos para ver si resolvemos
+            ans = dns.query.udp(name, rdataset.rdtype, rdataset.rdclass)
+
             result = ans.rrset.to_rdataset()
             if result == rdataset:
                 if opts.compare_ttl:
