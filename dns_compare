@@ -97,7 +97,7 @@ if __name__ == '__main__':
         try:
         #            ans = r.query(name, rdataset.rdtype, rdataset.rdclass)
         # cloudflare: modificamos para ver si resolvemos
-            ans = dns.query.udp(name, rdataset.rdtype, rdataset.rdclass)
+            ans = dns.query.udp(r, opts.nameserver)
 
             result = ans.rrset.to_rdataset()
             if result == rdataset:
